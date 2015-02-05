@@ -1,0 +1,95 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///PROCEDURE FOR GETTING STEREO CAMERA ATTRIBUTES///////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///(CAMERA SHAPE, 0=IO 1=ZPP)///////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+proc string printStCamAttr(string $inCam, int $p)
+{
+    float $io = `getAttr ( $inCam + ".interaxialSeparation" )`; // pulling values from center camera
+    float $zpp = `getAttr ( $inCam + ".zeroParallax" )`;        //
+    string $result;
+				                
+    if ($p == 0) // IO: outputting values based on params
+    { 
+        $io = trunc($io * pow(10, 2)) / pow(10, 2); // two decimal places
+        $result = $io;
+		return $result;
+    }
+
+    if ($p == 1) // ZPP: outputting values based on params
+    {
+        $zpp = trunc($zpp * pow(10, 2)) / pow(10, 2); // two decimal places
+        $result = $zpp;
+	    return $result;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///GET STEREO CAMERAS, COUNT CAMERAS////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+string $cams[] = `ls -type "camera"`;
+string $stCam;
+int $w = 0; // warning / stereo camera counter
+for ($c in $cams)
+{
+    if (gmatch($c,"*Center*") || gmatch($c, "*:*Center*"))
+    {
+        $stCam = $c;
+        $w++;
+    }
+}
+
+if ($w>1)
+{
+    error ("\nI was lazy and didn't script this to support multiple stereo camera rigs in a scene :(");
+}
+
+if ($w==0)
+{
+    error ("\nDerp.. no stereo cameras in the scene.  OR ... you renamed the center camera shape for some reason?");
+}
+   
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///CLEAR OLD HUDS///////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+if (`headsUpDisplay -exists "HUDStereoZPP"` || `headsUpDisplay -exists "HUDStereoIO"`)
+{
+    headsUpDisplay -remove "HUDStereoZPP";
+    headsUpDisplay -remove "HUDStereoIO";
+}
+
+ 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+///PRINT HUDS///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+headsUpDisplay 
+
+-section 5
+-block 1
+-blockSize "small"
+-label "IOD:"
+-command "printStCamAttr($stCam, 0)"
+-dataFontSize "large"
+-dataAlignment "right"
+-attributeChange ( $stCam + ".interaxialSeparation" )
+-vis 1
+HUDStereoIO;
+
+
+headsUpDisplay 
+
+-section 5
+-block 2
+-blockSize "small"
+-label "ZPP:"
+-command "printStCamAttr($stCam, 1)"
+-dataFontSize "large"
+-dataAlignment "right"
+-attributeChange ( $stCam + ".zeroParallax" )
+-vis 1
+HUDStereoZPP;

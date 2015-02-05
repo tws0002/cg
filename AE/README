@@ -1,0 +1,14 @@
+Scripts for After Effects.
+
+Here is a quick description of the ones not unique to my studio's internal workflow:
+
+Render to Console (Multi):
+Renders all active items in your render queue to the console using multiple threads.  (Close AE once it's running.)
+
+Render to Console (Single):
+Renders all active items in your rener queue to the console using a single thread.  (Close AE once it's running.)
+
+Convert Quicktime to rec709:
+Select any quicktimes in your project window, and when the script is run they will be added to your render queue at broadcast rec709 specs.
+(16-235 black/white, 59.94 framerate)
+Modifications are fairly straightforward.

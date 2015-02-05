@@ -1,0 +1,35 @@
+string $sel[] = `ls -sl` ;
+
+for ($obj in $sel)
+{
+    poopLocator($obj) ;
+}
+
+// define a procedure to drop a locator
+global proc poopLocator(string $objName)
+{
+	
+	string $nsLoc = ($objName + "_Loc") ;
+	
+	if (`objExists "newLoc"`)
+		delete newLoc ; 
+	
+	createNode locator -n "newLocShape" ;
+	rename newLoc $nsLoc ;
+	
+	parentConstraint $objName $nsLoc ;
+	scaleConstraint $objName $nsLoc ;
+	
+	string $buffer[] ;
+	
+	tokenize $nsLoc ":" $buffer ;
+	string $loc = $buffer[size($buffer)-1] ;
+  //catch(`rename $objName $tmpLoc`) ;
+		
+	delete ($loc + "_parentConstraint1") ;
+	delete ($loc + "_scaleConstraint1") ;
+ 	rename $nsLoc $loc ;
+  	
+ 	setAttr ($objName + ".visibility") 0 ;
+
+}

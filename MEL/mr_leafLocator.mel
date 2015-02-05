@@ -1,0 +1,171 @@
+string $sel[] = `ls -sl`;
+
+for ($obj in $sel)
+{
+    string $loc = ($obj + "_Locator");
+    
+    createNode locator -n "newLocShape";
+    rename newLoc $loc;
+    
+    // center the pivot of each polygon / leaf shape and reset the pivot for later
+    xform -cp $obj;
+    select $obj;
+    resetPivot;
+    
+
+    // get coordinates for this polygon's first 3 vertices
+    int $vertices[] = {0, 1, 2, 3};
+    vector $vector[3];
+    for ( $p = 0; $p < 3; $p++ )
+    {
+      float $coord[3];
+
+      $command = "xform -q -ws -t " + $obj + ".vtx[" + $vertices[$p] + "]";
+      $coord = `eval $command`;
+      $vector[$p] = << $coord[0], $coord[1], $coord[2] >>;
+    }
+
+    // de-array for this math coming up
+    vector $v0, $v1, $v2;
+    $v0 = $vector[0];
+    $v1 = $vector[1];
+    $v2 = $vector[2];
+
+    // get two vectors from those 3 verts
+    vector $vec[2];
+    $vec[0] =
+      <<
+        $v0.x - $v2.x,
+        $v0.y - $v2.y,
+        $v0.z - $v2.z
+      >>;
+
+    $vec[1] =
+      <<
+        $v1.x - $v2.x,
+        $v1.y - $v2.y,
+        $v1.z - $v2.z
+      >>;
+
+    // cross product of those two vectors = normal
+    vector $normal;
+    $normal = `cross $vec[0] $vec[1]`;
+
+		// measure angle between normal and Y-up
+    float $rot[] = `angleBetween -euler -v1 0 1 0 -v2 ($normal.x) ($normal.y) ($normal.z)`;
+
+		// rotate locator
+    setAttr ($loc + ".rotateX") $rot[0];
+    setAttr ($loc + ".rotateY") $rot[1];
+    setAttr ($loc + ".rotateZ") $rot[2];
+
+    // lazy way of moving locator to the center of the plane
+    parentConstraint -sr x -sr y -sr z $obj $loc;
+    delete ($loc + "_parentConstraint1");
+
+}
+
+
+// useful procs
+proc string getArrayItem0(string $array[])
+{
+	return $array[0];
+}
+
+
+// proc to get the position in the outliner
+proc int reorderQ (string $object)
+{
+	string $shortName = match("[^|]*$", $object);
+	string $parent = getArrayItem0(`listRelatives -f -p $object`);
+	
+    string $siblings[]; // get all siblings
+    if ($parent != "") // if theres a parent
+		$siblings = `listRelatives -f -c -type transform -type shape $parent`;
+    else // or if theres none
+		$siblings = `ls -l -assemblies`;
+
+	int $position = 0; // browse siblings
+    for ($sibling in $siblings)
+	{
+        if (match("[^|]*$", $sibling) != $shortName) //search $origObj in $siblings
+            $position++; //increase for each obj that isn't $object
+        else
+			return $position; // stop if found $origObj
+	}
+}
+
+
+// proc to reset pivot points
+global proc resetPivot()
+{
+	string $sel[] = `ls -sl -l -transforms`;
+	int $count = 1;
+	for ($obj in $sel)
+	{
+		string $shortName = `match "[^|]*$" $obj`;
+		vector $localPivot = `xform -q -rp $obj`;
+		if ($localPivot != <<0.0, 0.0, 0.0>>)
+		{
+			print("resetPivot (" + $count + "): \"" + $shortName + "\" has an offset of (" + $localPivot.x + ") (" + $localPivot.y + ") (" + $localPivot.z + ")\n");
+			
+			//cut potential translation keys and take result for animation-check
+			//int $animCheck = `cutKey -at "tx" -at "ty" -at "tz" $obj`;
+			
+			// check if the object has children
+			string $children[] = `listRelatives -f -c -type "transform" $obj`;
+			if (`size($children)`) // and parent them to the world
+				$children = `parent -w $children`;
+			
+			// parent to world if not already
+			string $parent = getArrayItem0(`listRelatives -p -f $obj`);
+			int $outlinerPosition;
+			if ($parent != "")
+			{
+				$outlinerPosition = reorderQ($obj); // store outliner position for restoration
+				$obj = getArrayItem0(`parent -w $obj`); 
+			}
+
+			// get real world position
+			vector $worldPos = `xform -q -ws -rp $obj`; 
+			move -rpr 0 0 0 $obj;
+			makeIdentity -apply true -t 1 -r 0 -s 0 $obj;
+			xform -t ($worldPos.x) ($worldPos.y) ($worldPos.z) $obj;
+			if ($parent != "") // reparent obj
+			{
+				$obj = getArrayItem0(`parent $obj $parent`);
+				$obj = `rename $obj $shortName`;
+				reorder -front $obj;
+				reorder -relative $outlinerPosition $obj;
+			}
+
+			// put the children back under the object
+			if (`size($children)`)
+			{
+				for ($child in $children)
+				{
+					// reparent this child
+ 					$child = getArrayItem0(`parent $child $obj`);
+					vector $curPos = `getAttr ($child + ".t")`;
+
+					//relocateTransAnim($curPos, $child);
+				}
+			}
+
+			// sometimes there is a very tiny restvalue so:
+			// forcing local pivot to 0 0 0
+			xform -rp 0 0 0 $obj;
+			xform -sp 0 0 0 $obj;
+
+			// final test
+			$localPivot = `xform -q -rp $obj`;
+			if ($localPivot == <<0,0,0>>)
+				print ("resetPivot (" + $count++ + "): \"" + $shortName + "\" fixet! No offset anymore!\n");
+			else
+				warning ("\"" + $shortName + " has still an offset!!");
+		}
+		else
+			print ("resetPivot (" + $count++ + "): pivot of "+$shortName+" not dirty! Skipped!\n");
+	}
+	select -r $sel;
+}
