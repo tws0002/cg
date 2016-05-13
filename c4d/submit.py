@@ -2,7 +2,7 @@
 Submit Scene to Qube
 
 Copyright: 2015 ESPN Productions
-Written for Cinema4d R14 & R15
+Compatible with Cinema4D R14, R15, R17
 Author: Mark Rohrer (mark.rohrer@espn.com)
 
 Name-US: Submit Scene to Qube
@@ -17,7 +17,7 @@ from random import uniform
 from c4d import gui
 
 # Default submission settings
-default_priority = 9999
+default_priority = 5000
 cpu_limit = 183
 
 # Localization variables for each ESPN render farm
@@ -183,10 +183,11 @@ class SubmissionDialog(gui.GeDialog):
 
       # Get C4D version
       version = c4d.GetC4DVersion()/1000
-      if version == 15:
-        exe = "R:\\Program Files\\MAXON\\CINEMA 4D R15\\CINEMA 4D 64 Bit.exe"
-      elif version == 14:
-        exe = "R:\\Program Files\\MAXON\\CINEMA 4D R14\\CINEMA 4D 64 Bit.exe"
+      version_map = {
+        17: "R:\\Program Files\\MAXON\\CINEMA 4D R17\\CINEMA 4D.exe",
+        15: "R:\\Program Files\\MAXON\\CINEMA 4D R15\\CINEMA 4D 64 Bit.exe",
+        14: "R:\\Program Files\\MAXON\\CINEMA 4D R14\\CINEMA 4D 64 Bit.exe"
+      }
 
       # Getting frame range in cinema is a PITA
       fps = rd[c4d.RDATA_FRAMERATE]
@@ -297,7 +298,7 @@ class SubmissionDialog(gui.GeDialog):
          'prototype':'cmdrange',
          'package':{
                     'simpleCmdType': 'Cinema4d (Win)',
-                    'c4dExe':        "R:\\Program Files\\MAXON\\CINEMA 4D R15\\CINEMA 4D 64 Bit",
+                    'c4dExe':        version_map[version],
                     '-render':       scene_path,
                     '-oimage':       output_path, 
                     '-omultipass':   output_multi_path,
