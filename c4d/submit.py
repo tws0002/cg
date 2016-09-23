@@ -176,18 +176,18 @@ class SubmissionDialog(gui.GeDialog):
     # RenderData container object
     rd = doc.GetActiveRenderData()
 
+    # Get C4D version
+    version = c4d.GetC4DVersion()/1000
+    version_map = {
+      17: "R:\\Program Files\\MAXON\\CINEMA 4D R17\\CINEMA 4D.exe",
+      15: "R:\\Program Files\\MAXON\\CINEMA 4D R15\\CINEMA 4D 64 Bit.exe",
+      14: "R:\\Program Files\\MAXON\\CINEMA 4D R14\\CINEMA 4D 64 Bit.exe"
+    }
+
     if init:
       # Scene name / location
       scene_name = doc.GetDocumentName()
       scene_path = doc.GetDocumentPath() + '\\' + scene_name
-
-      # Get C4D version
-      version = c4d.GetC4DVersion()/1000
-      version_map = {
-        17: "R:\\Program Files\\MAXON\\CINEMA 4D R17\\CINEMA 4D.exe",
-        15: "R:\\Program Files\\MAXON\\CINEMA 4D R15\\CINEMA 4D 64 Bit.exe",
-        14: "R:\\Program Files\\MAXON\\CINEMA 4D R14\\CINEMA 4D 64 Bit.exe"
-      }
 
       # Getting frame range in cinema is a PITA
       fps = rd[c4d.RDATA_FRAMERATE]

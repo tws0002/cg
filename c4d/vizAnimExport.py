@@ -22,7 +22,8 @@ tracks = [
     'Rotation . B',
     'Scale . X',
     'Scale . Y',
-    'Scale . Z'
+    'Scale . Z',
+    'Field of View (Vertical)'
     ]
 
 def format_value_27(num, deg=False):
@@ -76,13 +77,14 @@ def main():
                     format_value(key_dict['Position . Z'][i]),
                     format_value(key_dict['Rotation . H'][i], deg=True),
                     format_value(key_dict['Rotation . P'][i], deg=True),
-                    format_value(key_dict['Rotation . B'][i], deg=True)
+                    format_value(key_dict['Rotation . B'][i], deg=True),
+                    format_value(key_dict['Field of View (Vertical)'][i], deg=True)
                 ]
                 try:
-                    stream.write('%s, %s, %s, %s, %s, %s\n' % (line[0], line[1], line[2], line[3], line[4], line[5]))
+                    stream.write('%s, %s, %s, %s, %s, %s, %s\n' % (line[0], line[1], line[2], line[3], line[4], line[5], line[6]))
                     #stream.write('{},{},{},{},{},{}\n'.format(*line))
                     if (fps == 30):
-                        stream.write('%s, %s, %s, %s, %s, %s\n' % (line[0], line[1], line[2], line[3], line[4], line[5]))
+                        stream.write('%s, %s, %s, %s, %s, %s, %s\n' % (line[0], line[1], line[2], line[3], line[4], line[5], line[6]))
                         #stream.write('{},{},{},{},{},{}\n'.format(*line))    
                 except KeyError:
                     msg = 'Required track missing from baked object. Check that \'Clean Tracks\' is unchecked before baking.' 
